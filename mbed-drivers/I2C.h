@@ -58,6 +58,12 @@ public:
         MasterRead
     };
 
+    enum RxSlaveStatus {
+        ReadAddressed  = 1,
+        WriteGeneral   = 2,
+        WriteAddressed = 3
+    };
+
     enum Acknowledge {
         NoACK = 0,
         ACK   = 1
@@ -135,6 +141,43 @@ public:
     /** Creates a stop condition on the I2C bus
      */
     void stop(void);
+
+    /* Slave related functions */
+
+    /** Set the device own address in slave mode
+     */
+    void address(int address);
+
+    /** Check if someone hit its own address and
+     * check direction of transfer (transmission
+     * or reception)
+     */
+    int receive(void);
+
+    /** Slave read in blocking mode
+     */
+    int slave_read(char *data, int length);
+
+    /** Slave write in blocking mode
+     */
+    int slave_write(const char *data, int length);
+
+    /** Enable address acknowledge
+     */
+    void slave_mode(int enable_slave);
+
+    /** Reset the I2C slave back into the known ready receiving state.
+     */
+    void reset(void);
+
+
+    /*******
+     * Non-Blocking mode: DMA
+     * */
+    int master_transmit_DMA(int address, const char* data, int length, bool repeated = false);
+    int master_receive_DMA(int address, char* data, int length, bool repeated = false);
+    int slave_transmit_DMA(const char *data, int length);
+    int slave_receive_DMA(char *data, int length);
 
 #if DEVICE_I2C_ASYNCH
     /** I2C transfer callback
