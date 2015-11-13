@@ -58,21 +58,21 @@ int I2C::write(int address, const char* data, int length, bool repeated) {
     int stop = (repeated) ? 0 : 1;
     int written = i2c_write(&_i2c, address, data, length, stop);
 
-    return length != written;
+    return written;
 }
 
 int I2C::write(int data) {
     return i2c_byte_write(&_i2c, data);
 }
 
-// read - Master Reciever Mode
+// read - Master Receiver Mode
 int I2C::read(int address, char* data, int length, bool repeated) {
     aquire();
 
     int stop = (repeated) ? 0 : 1;
     int read = i2c_read(&_i2c, address, data, length, stop);
 
-    return length != read;
+    return read;
 }
 
 int I2C::read(int ack) {
@@ -89,6 +89,78 @@ void I2C::start(void) {
 
 void I2C::stop(void) {
     i2c_stop(&_i2c);
+}
+
+/* Slave related functions */
+void I2C::address(int address) {
+    int addr = (address & 0xFF) | 1;
+    i2c_slave_address(&_i2c, 0, addr, 0);
+    i2c_slave_mode(&_i2c, 1);
+}
+
+int I2C::receive(void) {
+    return i2c_slave_receive(&_i2c);
+}
+
+int I2C::slave_read(char *data, int length) {
+	return i2c_slave_read(&_i2c, data, length);
+}
+
+int I2C::slave_write(const char *data, int length) {
+	return i2c_slave_write(&_i2c, data, length);
+}
+
+void I2C::slave_mode(int enable_slave) {
+	i2c_slave_mode(&_i2c, enable_slave);
+}
+
+void I2C::reset(void) {
+    i2c_reset(&_i2c);
+}
+
+int I2C::enable_slave_it(void) {
+
+	int enabled;
+	enabled = i2c_enable_slave_it(&_i2c);
+
+	return enabled;
+}
+
+/*******
+ * Non-Blocking mode: DMA
+ * */
+int I2C::master_transmit_DMA(int address, const char* data, int length, bool repeated)
+{
+	aquire();
+
+	int stop = (repeated) ? 0 : 1;
+	int write = i2c_master_transmit_DMA(&_i2c, address, data, length, stop);
+
+	return write;
+}
+
+int I2C::master_receive_DMA(int address, char* data, int length, bool repeated)
+{
+	aquire();
+
+	int stop = (repeated) ? 0 : 1;
+	int read = i2c_master_receive_DMA(&_i2c, address, data, length, stop);
+
+	return read;
+}
+
+int I2C::slave_transmit_DMA(const char *data, int length)
+{
+	aquire();
+
+	return i2c_slave_transmit_DMA(&_i2c, data, length);
+}
+
+int I2C::slave_receive_DMA(char *data, int length)
+{
+	aquire();
+
+	return i2c_slave_receive_DMA(&_i2c, data, length);
 }
 
 #if DEVICE_I2C_ASYNCH
