@@ -144,7 +144,7 @@ public:
 
     /* Slave related functions */
 
-    /** Set the device own address in slave mode
+    /** Set the device own address
      */
     void address(int address);
 
@@ -152,6 +152,7 @@ public:
      * check direction of transfer (transmission
      * or reception)
      */
+#if DEVICE_I2CSLAVE
     int receive(void);
 
     /** Slave read in blocking mode
@@ -169,16 +170,17 @@ public:
     /** Reset the I2C slave back into the known ready receiving state.
      */
     void reset(void);
+#endif
 
-    int enable_slave_it(void);
-
-    /*******
-     * Non-Blocking mode: DMA
-     * */
-    int master_transmit_DMA(int address, const char* data, int length, bool repeated = false);
-    int master_receive_DMA(int address, char* data, int length, bool repeated = false);
-    int slave_transmit_DMA(const char *data, int length);
-    int slave_receive_DMA(char *data, int length);
+#ifdef DEVICE_I2C_DMA
+    /* Register I2C transfer callback */
+    void attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6);
+    /** I2C using DMA */
+    int master_transmit_DMA(int address, const unsigned char* data, int length, bool repeated = false);
+    int master_receive_DMA(int address, unsigned char* data, int length, bool repeated = false);
+    int slave_transmit_DMA(const unsigned char *data, int length);
+    int slave_receive_DMA(unsigned  char *data, int length);
+#endif
 
 #if DEVICE_I2C_ASYNCH
     /** I2C transfer callback

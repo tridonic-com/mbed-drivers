@@ -91,6 +91,13 @@ void I2C::stop(void) {
     i2c_stop(&_i2c);
 }
 
+void I2C::address(int address) {
+    int addr = (address & 0xFF) | 1;
+    i2c_set_own_address(&_i2c, addr);
+    i2c_enable_i2c_it(&_i2c);
+}
+
+#if DEVICE_I2CSLAVE
 /* Slave related functions */
 void I2C::address(int address) {
     int addr = (address & 0xFF) | 1;
@@ -117,20 +124,14 @@ void I2C::slave_mode(int enable_slave) {
 void I2C::reset(void) {
     i2c_reset(&_i2c);
 }
+#endif
 
-int I2C::enable_slave_it(void) {
-
-	int enabled;
-	enabled = i2c_enable_slave_it(&_i2c);
-
-	return enabled;
+#ifdef DEVICE_I2C_DMA
+void I2C::attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6) {
+	i2c_register_event_cb(fptr1, fptr2, fptr3, fptr4, fptr5, fptr6);
 }
 
-/*******
- * Non-Blocking mode: DMA
- * */
-int I2C::master_transmit_DMA(int address, const char* data, int length, bool repeated)
-{
+int I2C::master_transmit_DMA(int address, const unsigned char* data, int length, bool repeated) {
 	aquire();
 
 	int stop = (repeated) ? 0 : 1;
@@ -139,8 +140,7 @@ int I2C::master_transmit_DMA(int address, const char* data, int length, bool rep
 	return write;
 }
 
-int I2C::master_receive_DMA(int address, char* data, int length, bool repeated)
-{
+int I2C::master_receive_DMA(int address, unsigned char* data, int length, bool repeated) {
 	aquire();
 
 	int stop = (repeated) ? 0 : 1;
@@ -149,19 +149,18 @@ int I2C::master_receive_DMA(int address, char* data, int length, bool repeated)
 	return read;
 }
 
-int I2C::slave_transmit_DMA(const char *data, int length)
-{
+int I2C::slave_transmit_DMA(const unsigned char *data, int length) {
 	aquire();
 
 	return i2c_slave_transmit_DMA(&_i2c, data, length);
 }
 
-int I2C::slave_receive_DMA(char *data, int length)
-{
+int I2C::slave_receive_DMA(unsigned char *data, int length) {
 	aquire();
 
 	return i2c_slave_receive_DMA(&_i2c, data, length);
 }
+#endif
 
 #if DEVICE_I2C_ASYNCH
 
