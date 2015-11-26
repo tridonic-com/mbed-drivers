@@ -131,19 +131,17 @@ void I2C::attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_
 	i2c_register_event_cb(fptr1, fptr2, fptr3, fptr4, fptr5, fptr6);
 }
 
-int I2C::master_transmit_DMA(int address, const unsigned char* data, int length, bool repeated) {
+int I2C::master_transmit_DMA(int address, const unsigned char* data, int length, bool stop) {
 	aquire();
 
-	int stop = (repeated) ? 0 : 1;
 	int write = i2c_master_transmit_DMA(&_i2c, address, data, length, stop);
 
 	return write;
 }
 
-int I2C::master_receive_DMA(int address, unsigned char* data, int length, bool repeated) {
+int I2C::master_receive_DMA(int address, unsigned char* data, int length, bool stop) {
 	aquire();
 
-	int stop = (repeated) ? 0 : 1;
 	int read = i2c_master_receive_DMA(&_i2c, address, data, length, stop);
 
 	return read;

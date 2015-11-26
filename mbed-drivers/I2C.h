@@ -176,8 +176,8 @@ public:
     /* Register I2C transfer callback */
     void attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6);
     /** I2C using DMA */
-    int master_transmit_DMA(int address, const unsigned char* data, int length, bool repeated = false);
-    int master_receive_DMA(int address, unsigned char* data, int length, bool repeated = false);
+    int master_transmit_DMA(int address, const unsigned char* data, int length, bool repeated);
+    int master_receive_DMA(int address, unsigned char* data, int length, bool repeated);
     int slave_transmit_DMA(const unsigned char *data, int length);
     int slave_receive_DMA(unsigned  char *data, int length);
 #endif
