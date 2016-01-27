@@ -425,6 +425,42 @@ extern "C" __weak void __cxa_pure_virtual(void) {
 // it is not meant for user code, but for HAL ports to perform initialization
 // before the scheduler is started
 
+extern "C" void SystemClock_Config(void)
+{
+#ifdef TARGET_LIKE_STM32F0
+
+#warning "For STM32F0 the sysclock is set to 48MHz at not best place..."
+
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  uint32_t pFLatency;
+
+  HAL_RCC_GetOscConfig(&RCC_OscInitStruct);
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;    // RCC_OSCILLATORTYPE_HSI, RCC_OSCILLATORTYPE_HSI48
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;                      // RCC_HSI_ON, RCC_HSI_OFF
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_OFF;                 // RCC_HSI48_ON, RCC_HSI48_OFF
+  RCC_OscInitStruct.PLL.PREDIV = RCC_PREDIV_DIV1;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;                  // RCC_PLL_MUL2 .. RCC_PLL_MUL16
+  RCC_OscInitStruct.PLL.PLLSource = RCC_CFGR_PLLSRC_HSI_PREDIV; // RCC_CFGR_PLLSRC_HSI_PREDIV, RCC_CFGR_PLLSRC_HSI48_PREDIV
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+  HAL_RCC_GetClockConfig(&RCC_ClkInitStruct, &pFLatency);
+  RCC_ClkInitStruct.ClockType =  RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_CFGR_SW_PLL;             //RCC_CFGR_SW_HSI, RCC_CFGR_SW_HSI48, RCC_CFGR_SW_PLL
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+
+  /* Depending on the SYSCLK (system clock) the Flash Latency has to be set:
+     FLASH_LATENCY_0: Zero wait state, if SYSCLK <= 24 MHz
+     FLASH_LATENCY_1: One wait state, if 24 MHz < SYSCLK <= 48 MHz */
+
+   HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1);
+
+  __SYSCFG_CLK_ENABLE();
+#endif
+}
+
 #if defined(TOOLCHAIN_ARM)
 extern "C" int $Super$$main(void);
 
@@ -436,6 +472,7 @@ extern "C" int $Sub$$main(void) {
 extern "C" int __real_main(void);
 
 extern "C" int __wrap_main(void) {
+    SystemClock_Config();
     mbed_hal_init();
     return __real_main();
 }
