@@ -449,7 +449,11 @@ extern "C" void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType =  RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_CFGR_SW_PLL;             //RCC_CFGR_SW_HSI, RCC_CFGR_SW_HSI48, RCC_CFGR_SW_PLL
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+ #if (YOTTA_CFG_TRIDONIC_ILB_DEVICE_GEAR_ACDC == 1)
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+#else
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+#endif
 
   /* Depending on the SYSCLK (system clock) the Flash Latency has to be set:
      FLASH_LATENCY_0: Zero wait state, if SYSCLK <= 24 MHz
