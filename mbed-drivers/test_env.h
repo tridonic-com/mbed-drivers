@@ -1,19 +1,19 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2013-2014 ARM Limited
+/*
+ * Copyright (c) 2013-2016, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
 #ifndef TEST_ENV_H_
 #define TEST_ENV_H_
 
@@ -43,6 +43,10 @@ void notify_host_test_name(const char *host_test);
 void notify_timeout(int timeout);
 void notify_test_id(const char *test_id);
 void notify_test_description(const char *description);
+
+// Code Coverage API
+void notify_coverage_start(const char *path);
+void notify_coverage_end();
 
 // Host test auto-detection API
 #define MBED_HOSTTEST_START(TESTID)      notify_test_id(TESTID); notify_start()

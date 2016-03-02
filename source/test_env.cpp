@@ -1,19 +1,19 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2013-2014 ARM Limited
+/*
+ * Copyright (c) 2013-2016, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "mbed-drivers/test_env.h"
 
 // Const strings used in test_end
@@ -23,6 +23,11 @@ const char* TEST_ENV_FAILURE = "failure";
 const char* TEST_ENV_MEASURE = "measure";
 const char* TEST_ENV_END = "end";
 
+/* prototype */
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+extern "C" void __gcov_flush();
+bool coverage_report = false;
+#endif
 
 static void led_blink(PinName led, float delay)
 {
@@ -58,7 +63,13 @@ void notify_performance_coefficient(const char* measurement_name, const double v
 
 void notify_completion(bool success)
 {
-    printf("{{%s}}" NL "{{%s}}" NL, success ? TEST_ENV_SUCCESS : TEST_ENV_FAILURE, TEST_ENV_END);
+    printf("{{%s}}" NL, success ? TEST_ENV_SUCCESS : TEST_ENV_FAILURE);
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    coverage_report = true;
+    __gcov_flush();
+    coverage_report = false;
+#endif
+    printf("{{%s}}" NL, TEST_ENV_END);
     led_blink(LED1, success ? 1.0 : 0.1);
 }
 
@@ -95,6 +106,14 @@ void notify_test_description(const char *description) {
     }
 }
 
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+void notify_coverage_start(const char *path) {
+    printf("{{coverage_start;%s}}" NL, path);
+}
+void notify_coverage_end() {
+    printf("{{coverage_end}}" NL);
+}
+#endif
 
 // -DMBED_BUILD_TIMESTAMP=1406208182.13
 unsigned int testenv_randseed()

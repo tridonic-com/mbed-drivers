@@ -1,15 +1,16 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2006-2013 ARM Limited
+/*
+ * Copyright (c) 2006-2016, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -21,15 +22,14 @@
 #include "compiler-polyfill/attributes.h"
 #include "cmsis.h"
 #include <errno.h>
-#include "mbed-drivers/app.h"
 #include "minar/minar.h"
 #include "mbed-hal/init_api.h"
+#include "mbed-hal/serial_api.h"
 #include "core_generic.h"
 
 #if defined(__ARMCC_VERSION)
 #   include <rt_sys.h>
 #   define PREFIX(x)    _sys##x
-#   define OPEN_MAX     _SYS_OPEN
 #   ifdef __MICROLIB
 #       pragma import(__use_full_stdio)
 #   endif
@@ -37,7 +37,6 @@
 #elif defined(__ICCARM__)
 #   include <yfuns.h>
 #   define PREFIX(x)        _##x
-#   define OPEN_MAX         16
 
 #   define STDIN_FILENO     0
 #   define STDOUT_FILENO    1
@@ -50,6 +49,10 @@
 #   define PREFIX(x)    x
 #endif
 
+#ifndef YOTTA_CFG_MBED_MAX_FILEHANDLES
+#   define YOTTA_CFG_MBED_MAX_FILEHANDLES 16
+#endif
+
 #ifndef pid_t
  typedef int pid_t;
 #endif
@@ -57,7 +60,20 @@
  typedef char * caddr_t;
 #endif
 
+#ifndef YOTTA_CFG_MBED_OS_STDIO_DEFAULT_BAUD
+#define YOTTA_CFG_MBED_OS_STDIO_DEFAULT_BAUD 115200
+#endif
+
+#define STDIO_DEFAULT_BAUD YOTTA_CFG_MBED_OS_STDIO_DEFAULT_BAUD
+
+
 using namespace mbed;
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+#include "mbed-drivers/test_env.h"
+extern bool coverage_report;
+const int gcov_fd = 'g' + ((int)'c' << 8);
+#endif
+
 
 #if defined(__MICROLIB) && (__ARMCC_VERSION>5030000)
 // Before version 5.03, we were using a patched version of microlib with proper names
@@ -76,7 +92,7 @@ extern const char __stderr_name[] = "/stderr";
  * put it in a filehandles array and return the index into that array
  * (or rather index+3, as filehandles 0-2 are stdin/out/err).
  */
-static FileHandle *filehandles[OPEN_MAX];
+static FileHandle *filehandles[YOTTA_CFG_MBED_MAX_FILEHANDLES];
 
 FileHandle::~FileHandle() {
     /* Remove all open filehandles for this */
@@ -88,14 +104,29 @@ FileHandle::~FileHandle() {
 }
 
 #if DEVICE_SERIAL
-extern int stdio_uart_inited;
-extern serial_t stdio_uart;
+
+#include "mbed-drivers/Serial.h"
+
+
+namespace mbed {
+
+Serial& get_stdio_serial()
+{
+    static bool stdio_uart_inited = false;
+    static Serial stdio_serial(STDIO_UART_TX, STDIO_UART_RX);
+    if (!stdio_uart_inited) {
+        stdio_serial.baud(STDIO_DEFAULT_BAUD);
+        stdio_uart_inited = true;
+    }
+    return stdio_serial;
+}
+
+} // namespace mbed
 #endif
 
 static void init_serial() {
 #if DEVICE_SERIAL
-    if (stdio_uart_inited) return;
-    serial_init(&stdio_uart, STDIO_UART_TX, STDIO_UART_RX);
+    get_stdio_serial();
 #endif
 }
 
@@ -133,13 +164,13 @@ static inline int openmode_to_posix(int openmode) {
 }
 
 extern "C" FILEHANDLE PREFIX(_open)(const char* name, int openmode) {
-    #if defined(__MICROLIB) && (__ARMCC_VERSION>5030000)
+#if defined(__MICROLIB) && (__ARMCC_VERSION>5030000)
     // Before version 5.03, we were using a patched version of microlib with proper names
     // This is the workaround that the microlib author suggested us
     static int n = 0;
     if (!std::strcmp(name, ":tt")) return n++;
 
-    #else
+#else
     /* Use the posix convention that stdin,out,err are filehandles 0,1,2.
      */
     if (std::strcmp(name, __stdin_name) == 0) {
@@ -152,7 +183,14 @@ extern "C" FILEHANDLE PREFIX(_open)(const char* name, int openmode) {
         init_serial();
         return 2;
     }
-    #endif
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    else if(coverage_report) {
+        notify_coverage_start(name);
+        return gcov_fd;
+    }
+#endif
+
+#endif
 
     // find the first empty slot in filehandles
     unsigned int fh_i;
@@ -194,6 +232,13 @@ extern "C" FILEHANDLE PREFIX(_open)(const char* name, int openmode) {
 }
 
 extern "C" int PREFIX(_close)(FILEHANDLE fh) {
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    if(coverage_report && fh == gcov_fd) {
+        notify_coverage_end();
+        return 0;
+    }
+#endif
+
     if (fh < 3) return 0;
 
     FileHandle* fhc = filehandles[fh-3];
@@ -212,13 +257,21 @@ extern "C" int PREFIX(_write)(FILEHANDLE fh, const unsigned char *buffer, unsign
     int n; // n is the number of bytes written
     if (fh < 3) {
 #if DEVICE_SERIAL
-        if (!stdio_uart_inited) init_serial();
         for (unsigned int i = 0; i < length; i++) {
-            serial_putc(&stdio_uart, buffer[i]);
+            get_stdio_serial().putc(buffer[i]);
         }
 #endif
         n = length;
-    } else {
+    }
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    else if(coverage_report && fh == gcov_fd) {
+        for (unsigned int i = 0; i < length; i++) {
+            printf("%02x", buffer[i]);
+        }
+        n = length;
+    }
+#endif
+    else {
         FileHandle* fhc = filehandles[fh-3];
         if (fhc == NULL) return -1;
 
@@ -238,11 +291,15 @@ extern "C" int PREFIX(_read)(FILEHANDLE fh, unsigned char *buffer, unsigned int 
 #endif
     (void) mode;
     int n; // n is the number of bytes read
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    if(coverage_report && fh == gcov_fd) {
+        return 0;
+    }
+#endif
     if (fh < 3) {
         // only read a character at a time from stdin
 #if DEVICE_SERIAL
-        if (!stdio_uart_inited) init_serial();
-        *buffer = serial_getc(&stdio_uart);
+        *buffer = get_stdio_serial().getc();
 #endif
         n = 1;
     } else {
@@ -284,6 +341,11 @@ int _lseek(FILEHANDLE fh, int offset, int whence)
 {
     if (fh < 3) return 0;
 
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    if(coverage_report && fh == gcov_fd) {
+        return 0;
+    }
+#endif
     FileHandle* fhc = filehandles[fh-3];
     if (fhc == NULL) return -1;
 
@@ -321,6 +383,12 @@ extern "C" int _fstat(int fd, struct stat *st) {
         st->st_mode = S_IFCHR;
         return  0;
     }
+#ifdef YOTTA_CFG_DEBUG_OPTIONS_COVERAGE
+    if (coverage_report && fd == gcov_fd) {
+        st->st_size = 0;
+        return 0;
+    }
+#endif
 
     errno = EBADF;
     return -1;
@@ -492,6 +560,7 @@ extern "C" void __iar_argc_argv() {
 #endif
 
 // the user should set up their application in app_start
+extern void app_start(int, char**);
 extern "C" int main(void) {
     minar::Scheduler::postCallback(
         mbed::util::FunctionPointer2<void, int, char**>(&app_start).bind(0, NULL)
