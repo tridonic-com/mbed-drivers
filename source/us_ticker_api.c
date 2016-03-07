@@ -39,3 +39,8 @@ void us_ticker_irq_handler(void)
 {
     ticker_irq_handler(&us_data);
 }
+
+void us_ticker_overflow_handler(void)
+{
+	ticker_decrementUpper(&us_data);
+}

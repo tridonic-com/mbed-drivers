@@ -58,7 +58,7 @@ void ticker_insert_event(const ticker_data_t *const data, ticker_event_t *obj, t
     __disable_irq();
 
     // initialise our data
-    obj->timestamp = timestamp;
+    obj->timestamp = timestamp & 0xFFFFFFE0;	// mask lower bits to prevent a value near timer overflow
     obj->id = id;
 
     /* Go through the list until we either reach the end, or find
@@ -112,6 +112,21 @@ void ticker_remove_event(const ticker_data_t *const data, ticker_event_t *obj) {
     }
 
     __enable_irq();
+}
+
+void ticker_decrementUpper(const ticker_data_t *const data)
+{
+    /* Go through the list and reduce all timouts > timer-mask (upper part) */
+    ticker_event_t *p = data->queue->head;
+    while (p != NULL)
+    {
+        if(p->timestamp >= TICKER_TIME_OVERFLOW) 	// timerstamp past timer overflow?
+        {
+            p->timestamp -= TICKER_TIME_OVERFLOW;	// decrement timestamp by timer overflow value
+        }
+        /* go to the next element */
+        p = p->next;
+    }
 }
 
 timestamp_t ticker_read(const ticker_data_t *const data)
