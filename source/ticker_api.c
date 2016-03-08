@@ -124,6 +124,10 @@ void ticker_decrementUpper(const ticker_data_t *const data)
         {
             p->timestamp -= TICKER_TIME_OVERFLOW;	// decrement timestamp by timer overflow value
         }
+        else
+        {
+        	p->timestamp = 0;			// push missed event
+        }
         /* go to the next element */
         p = p->next;
     }
