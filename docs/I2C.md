@@ -1,6 +1,8 @@
 **Warning: this API is experimental and may be subject to change**
 
-# Asynchronous I2C
+mbed OS has two I2C APIs. This article covers the new, experimental version, which can be found on [mbed-drivers/v2](https://github.com/ARMmbed/mbed-drivers/blob/master/mbed-drivers/v2/I2C.hpp). The stable version is at [mbed-drivers](https://github.com/ARMmbed/mbed-drivers/blob/master/mbed-drivers/I2C.h).
+
+# Experimental version 2 asynchronous I2C
 I2C is a 2-wire serial bus protocol, designed to provide easy communication between peripherals on the same circuit board.
 
 The I2C class provides an asynchronous usage model for I2C master mode.
@@ -29,7 +31,7 @@ The `rx()` members add a buffer to receive into to the transfer. There is a spec
 
 The `apply()` method validates the transfer and adds it to the transaction queue of the I2CResourceManager. It returns the result of validation.
 
-# I2C Resource Managers
+# I2C resource managers
 I2C Resource managers are instantiated statically and initialized on first use. There is one Resource Manager per logical I2C master. Logical I2C masters could consist of:
 
 * Onchip I2C masters
@@ -51,7 +53,7 @@ The common operations provided by the Resource manager are:
 
 These operations are common to all resource managers, so they are provided by the interface class.
 
-## Event Handling overview
+## Event handling overview
 
 When an interrupt occurs, the HAL processes it; if anything needs to be handled by the upper layers, an event is generated. The derived resource manager should call I2CResourceManager::process_event with this event. If appropriate, the I2CResourceManager will call the I2CSegment's irq callback handler.
 
@@ -79,12 +81,15 @@ An I2CSegment is a wrapper around an EphemeralBuffer. It provides an I2C transfe
 # Example: constructing I2C transactions
 
 ```C++
+#include "mbed-drivers/mbed.h"
+#include "mbed-drivers/v2/I2C.hpp"
+
 void doneCB(bool dir, I2CTransaction *t, uint32_t event) {
     // Do something
 }
-I2C i2c0(sda, scl);
+mbed::drivers::v2::I2C i2c0(sda, scl);
 void app_start (int, char **) {
-    uint8_t cmd[2] = {0xaa, 0x55};
+    static uint8_t cmd[2] = {0xaa, 0x55};
     i2c0.transfer_to(addr).tx(cmd,2).rx(4).on(I2C_EVENT_ALL, doneCB);
 }
 ```
@@ -92,9 +97,10 @@ void app_start (int, char **) {
 # Example: Handling I2C events
 
 ```C++
- // Read 6 bytes from I2C EEPROM slave at address 0x62
+// Read 6 bytes from I2C EEPROM slave at address 0x62
 
- #include "mbed.h"
+#include "mbed-drivers/mbed.h"
+#include "mbed-drivers/v2/I2C.hpp"
 
 mbed::drivers::v2::I2C i2c(p28, p27);
 

@@ -14,14 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "mbed-drivers/platform.h"
+
+#if DEVICE_I2C && DEVICE_I2C_ASYNCH
+
 #include "mbed-drivers/v2/I2C.hpp"
 #include "mbed-drivers/v2/EphemeralBuffer.hpp"
 #include "minar/minar.h"
 #include "ualloc/ualloc.h"
 #include "core-util/CriticalSectionLock.h"
 #include "PeripheralPins.h"
-
-#if DEVICE_I2C && DEVICE_I2C_ASYNCH
+#include "mbed-drivers/mbed_error.h"
 
 namespace mbed {
 namespace drivers {
@@ -125,9 +129,18 @@ I2C::I2C(PinName sda, PinName scl) :
     // Select the appropriate I2C Resource Manager
     uint32_t i2c_sda = pinmap_peripheral(sda, PinMap_I2C_SDA);
     uint32_t i2c_scl = pinmap_peripheral(scl, PinMap_I2C_SCL);
-    int ownerID = pinmap_merge(i2c_sda, i2c_scl);
+    uint32_t peripheral = pinmap_merge(i2c_sda, i2c_scl);
+    CORE_UTIL_ASSERT(peripheral != (uint32_t)NC);
+    if (peripheral == (uint32_t)NC) {
+        _owner = NULL;
+        return;
+    }
+    uint32_t ownerID = pinmap_peripheral_instance(peripheral, PinMap_I2C_SDA);
+    CORE_UTIL_ASSERT(ownerID != (uint32_t)NC);
     _owner = detail::get_i2c_owner(ownerID);
-    CORE_UTIL_ASSERT(I2CError::None == _owner->init(sda, scl));
+    if (I2CError::None != _owner->init(sda, scl)) {
+        error("I2C init failed with an error");
+    }
 }
 
 I2C::~I2C ()
