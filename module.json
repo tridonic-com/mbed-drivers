@@ -30,7 +30,7 @@
     "mbed"
   ],
   "dependencies": {
-    "mbed-hal": "tridonic-com/mbed-hal#1.2.0-tri-0.0.5",
+    "mbed-hal": "tridonic-com/mbed-hal#b1.3.0-tri-0.4.0",
     "cmsis-core": "tridonic-com/cmsis-core#b1.2.0-tri-0.4.0",
     "ualloc": "^1.0.0",
     "minar": "^1.0.0",
