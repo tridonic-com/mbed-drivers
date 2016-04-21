@@ -1,6 +1,6 @@
 {
   "name": "mbed-drivers",
-  "version": "1.1.0-tri-0.1.0",
+  "version": "1.1.0-tri-0.1.6",
   "description": "mbed SDK",
   "keywords": [
     "mbed",
@@ -30,8 +30,8 @@
     "mbed"
   ],
   "dependencies": {
-    "mbed-hal": "tridonic-com/mbed-hal#1.2.0-tri-0.0.5",
-    "cmsis-core": "tridonic-com/cmsis-core#1.1.0-tri-0.0.5",
+    "mbed-hal": "tridonic-com/mbed-hal#b1.2.0-tri-0.1.6",
+    "cmsis-core": "tridonic-com/cmsis-core#b1.1.0-tri-0.1.6",
     "ualloc": "^1.0.0",
     "minar": "^1.0.0",
     "core-util": "^1.0.0",
