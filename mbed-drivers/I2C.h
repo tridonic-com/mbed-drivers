@@ -59,12 +59,6 @@ public:
         MasterRead
     };
 
-    enum RxSlaveStatus {
-        ReadAddressed  = 1,
-        WriteGeneral   = 2,
-        WriteAddressed = 3
-    };
-
     enum Acknowledge {
         NoACK = 0,
         ACK   = 1
@@ -143,37 +137,10 @@ public:
      */
     void stop(void);
 
-    /* Slave related functions */
-
-    /** Set the device own address
-     */
+#ifdef DEVICE_I2C_DMA
+    /** Set the device own address */
     void address(int address);
 
-    /** Check if someone hit its own address and
-     * check direction of transfer (transmission
-     * or reception)
-     */
-#if DEVICE_I2CSLAVE
-    int receive(void);
-
-    /** Slave read in blocking mode
-     */
-    int slave_read(char *data, int length);
-
-    /** Slave write in blocking mode
-     */
-    int slave_write(const char *data, int length);
-
-    /** Enable address acknowledge
-     */
-    void slave_mode(int enable_slave);
-
-    /** Reset the I2C slave back into the known ready receiving state.
-     */
-    void reset(void);
-#endif
-
-#ifdef DEVICE_I2C_DMA
     /* Register I2C transfer callback */
     void attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6);
     /** I2C using DMA */

@@ -59,21 +59,21 @@ int I2C::write(int address, const char* data, int length, bool repeated) {
     int stop = (repeated) ? 0 : 1;
     int written = i2c_write(&_i2c, address, data, length, stop);
 
-    return written;
+    return length != written;
 }
 
 int I2C::write(int data) {
     return i2c_byte_write(&_i2c, data);
 }
 
-// read - Master Receiver Mode
+// read - Master Reciever Mode
 int I2C::read(int address, char* data, int length, bool repeated) {
     aquire();
 
     int stop = (repeated) ? 0 : 1;
     int read = i2c_read(&_i2c, address, data, length, stop);
 
-    return read;
+    return length != read;
 }
 
 int I2C::read(int ack) {
@@ -92,42 +92,13 @@ void I2C::stop(void) {
     i2c_stop(&_i2c);
 }
 
+#ifdef DEVICE_I2C_DMA
 void I2C::address(int address) {
     int addr = (address & 0xFF) | 1;
     i2c_set_own_address(&_i2c, addr);
     i2c_enable_i2c_it(&_i2c);
 }
 
-#if DEVICE_I2CSLAVE
-/* Slave related functions */
-void I2C::address(int address) {
-    int addr = (address & 0xFF) | 1;
-    i2c_slave_address(&_i2c, 0, addr, 0);
-    i2c_slave_mode(&_i2c, 1);
-}
-
-int I2C::receive(void) {
-    return i2c_slave_receive(&_i2c);
-}
-
-int I2C::slave_read(char *data, int length) {
-	return i2c_slave_read(&_i2c, data, length);
-}
-
-int I2C::slave_write(const char *data, int length) {
-	return i2c_slave_write(&_i2c, data, length);
-}
-
-void I2C::slave_mode(int enable_slave) {
-	i2c_slave_mode(&_i2c, enable_slave);
-}
-
-void I2C::reset(void) {
-    i2c_reset(&_i2c);
-}
-#endif
-
-#ifdef DEVICE_I2C_DMA
 void I2C::attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6) {
 	i2c_register_event_cb(fptr1, fptr2, fptr3, fptr4, fptr5, fptr6);
 }
