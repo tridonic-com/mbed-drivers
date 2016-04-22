@@ -1,15 +1,16 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2006-2013 ARM Limited
+/*
+ * Copyright (c) 2006-2016, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -44,6 +45,7 @@ void InterruptIn::rise(void (*fptr)(void)) {
         _rise.attach(fptr);
         gpio_irq_set(&gpio_irq, IRQ_RISE, 1);
     } else {
+        _rise.clear();
         gpio_irq_set(&gpio_irq, IRQ_RISE, 0);
     }
 }
@@ -53,6 +55,7 @@ void InterruptIn::fall(void (*fptr)(void)) {
         _fall.attach(fptr);
         gpio_irq_set(&gpio_irq, IRQ_FALL, 1);
     } else {
+        _fall.clear();
         gpio_irq_set(&gpio_irq, IRQ_FALL, 0);
     }
 }
@@ -60,9 +63,18 @@ void InterruptIn::fall(void (*fptr)(void)) {
 void InterruptIn::_irq_handler(uint32_t id, gpio_irq_event event) {
     InterruptIn *handler = (InterruptIn*)id;
     switch (event) {
-        case IRQ_RISE: handler->_rise.call(); break;
-        case IRQ_FALL: handler->_fall.call(); break;
-        case IRQ_NONE: break;
+        case IRQ_RISE:
+            if (handler->_rise) {
+                handler->_rise.call();
+            }
+            break;
+        case IRQ_FALL: 
+            if (handler->_fall) {
+                handler->_fall.call();
+            }
+            break;
+        case IRQ_NONE:
+            break;
     }
 }
 

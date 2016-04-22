@@ -1,15 +1,16 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2006-2013 ARM Limited
+/*
+ * Copyright (c) 2006-2016, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -178,7 +179,7 @@ void SerialBase::start_read(const Buffer& buffer, char buffer_width, const event
 {
     (void)buffer_width; // deprecated
     _current_rx_transaction.callback = callback;
-    _current_tx_transaction.buffer = buffer;
+    _current_rx_transaction.buffer = buffer;
     _thunk_irq.callback(&SerialBase::interrupt_handler_asynch);
     serial_rx_asynch(&_serial, buffer.buf, buffer.length, 0, _thunk_irq.entry(), event, char_match, _rx_usage);
 }

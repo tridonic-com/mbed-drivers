@@ -1,10 +1,18 @@
 {
   "name": "mbed-drivers",
-  "version": "0.11.1-tri-0.0.5",
+  "version": "1.1.0-tri-0.1.0",
   "description": "mbed SDK",
   "keywords": [
     "mbed",
-    "mbed-official"
+    "mbed-official",
+    "drivers",
+    "spi",
+    "i2c",
+    "uart",
+    "gpio",
+    "adc",
+    "hardware",
+    "abstraction"
   ],
   "author": "Bogdan Marinescu <bogdan.marinescu@arm.com>",
   "repository": {

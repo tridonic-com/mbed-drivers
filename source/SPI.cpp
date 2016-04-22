@@ -1,25 +1,28 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2006-2013 ARM Limited
+/*
+ * Copyright (c) 2006-2016, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 #include "mbed-drivers/SPI.h"
 #include "minar/minar.h"
 #include "mbed-drivers/mbed_assert.h"
+#include "core-util/CriticalSectionLock.h"
 
 #if DEVICE_SPI
-
 namespace mbed {
+
+using namespace util;
 
 #if DEVICE_SPI_ASYNCH && TRANSACTION_QUEUE_SIZE_SPI
 CircularBuffer<SPI::transaction_t, TRANSACTION_QUEUE_SIZE_SPI> SPI::_transaction_buffer;
@@ -74,7 +77,13 @@ int SPI::write(int value) {
 
 int SPI::transfer(const SPI::SPITransferAdder &td)
 {
-    if (spi_active(&_spi)) {
+    bool queue;
+    {
+        CriticalSectionLock lock;
+        queue = _busy;
+        _busy = true;
+    }
+    if (queue || spi_active(&_spi)) {
         return queue_transfer(td._td);
     }
     start_transfer(td._td);
@@ -115,13 +124,17 @@ int SPI::set_dma_usage(DMAUsage usage)
 int SPI::queue_transfer(const transaction_data_t &td)
 {
 #if TRANSACTION_QUEUE_SIZE_SPI
+    CriticalSectionLock lock;
+    int result;
+
     transaction_t transaction(this, td);
     if (_transaction_buffer.full()) {
-        return -1; // the buffer is full
+        result = -1;
     } else {
         _transaction_buffer.push(transaction);
-        return 0;
+        result = 0;
     }
+    return result;
 #else
     return -1;
 #endif
@@ -146,7 +159,14 @@ void SPI::start_transaction(transaction_data_t *data)
 void SPI::dequeue_transaction()
 {
     transaction_t t;
-    if (_transaction_buffer.pop(t)) {
+    bool dequeued;
+    {
+        CriticalSectionLock lock;
+        dequeued = _transaction_buffer.pop(t);
+        _busy = dequeued;
+    }
+
+    if (dequeued) {
         SPI* obj = t.get_object();
         transaction_data_t* data = t.get_transaction();
         obj->start_transaction(data);
@@ -165,7 +185,6 @@ void SPI::irq_handler_asynch(void)
     }
 #if TRANSACTION_QUEUE_SIZE_SPI
     if (event & (SPI_EVENT_ALL | SPI_EVENT_INTERNAL_TRANSFER_COMPLETE)) {
-        // SPI peripheral is free (event happend), dequeue transaction
         dequeue_transaction();
     }
 #endif
