@@ -50,6 +50,7 @@
 #include "SPI.h"
 #include "I2C.h"
 #include "RawSerial.h"
+#include "InternalFlash.h"
 
 // mbed Internal components
 #include "Timer.h"
