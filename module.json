@@ -32,9 +32,9 @@
   "dependencies": {
     "mbed-hal": "tridonic-com/mbed-hal#b1.3.0-tri-0.5.0",
     "cmsis-core": "tridonic-com/cmsis-core#b1.2.0-tri-0.5.0",
-    "ualloc": "^1.0.0",
+    "ualloc": "tridonic-com/ualloc#b1.3.0-tri-0.5.0",
     "minar": "tridonic-com/minar#b1.3.0-tri-0.5.0",
-    "core-util": "^1.0.0",
+    "core-util": "tridonic-com/core-util#b1.8.0-tri-0.5.0",
     "compiler-polyfill": "^1.1.0",
     "greentea-client": ">=0.1.4,<2.0.0"
   },
