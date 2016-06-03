@@ -71,6 +71,12 @@ public:
      */
     I2C(PinName sda, PinName scl);
 
+    /** Reinitialise I2C interface in a case of any failure or erro on I2C bus.
+     *
+     *  @param none
+     */
+    void re_init();
+
     /** Set the frequency of the I2C interface
      *
      *  @param hz The bus frequency in hertz
@@ -203,6 +209,8 @@ protected:
     i2c_t _i2c;
     static I2C  *_owner;
     int         _hz;
+    PinName _sda;
+    PinName _scl;
 };
 
 } // namespace mbed

@@ -27,14 +27,26 @@ I2C::I2C(PinName sda, PinName scl) :
 #if DEVICE_I2C_ASYNCH
                                      _irq(this), _usage(DMA_USAGE_NEVER),
 #endif
-                                      _i2c(), _hz(100000) {
+                                      _i2c(), _hz(400000) {
     // The init function also set the frequency to 100000
     i2c_init(&_i2c, sda, scl);
-
+    _sda = sda;
+    _scl = scl;
     // Used to avoid unnecessary frequency updates
     _owner = this;
 }
 
+
+void I2C::re_init() {
+	// The init function also set the frequency to 100000
+	//HAL_I2C_MspDeInit_wrpr(&_i2c);
+	//i2c_init(&_i2c, _sda, _scl);
+	//HAL_I2C_MspInit_wrpr(&_i2c);
+
+	//new solution
+	i2c_deInit(&_i2c);
+	i2c_init(&_i2c, _sda, _scl);
+}
 void I2C::frequency(int hz) {
     _hz = hz;
 
