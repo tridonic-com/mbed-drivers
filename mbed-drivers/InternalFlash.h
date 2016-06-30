@@ -38,9 +38,10 @@ namespace mbed
 
         InternalFlash();
         ~InternalFlash();
-        int _Write(uint32_t ui32Address, uint8_t* pData, uint32_t ui32DataSize);
+        int _Write(uint32_t ui32Address, const uint8_t* pData, uint32_t ui32DataSize);
         int _read(uint32_t ui32Address, uint8_t* pData, uint32_t pui32DataSize);
-        int _EraseSector(uint32_t ui32SectorNumber);
+        int _EraseSector(uint16_t ui16SectorNumber);
+        int _EraseSector(uint32_t ui32Address);
         int _GetSectorInfo(uint32_t ui32SectorNumber, InternalFlash::SectorInfo_td* psInfo);
 
     private:
