@@ -18,6 +18,16 @@
  *****************************************************************************/
 
 #include "mbed-drivers/crc.h"
+#include "mbed-drivers/mbed.h"
+
+/*** TEST logger-macros ***/
+#if 0
+  #define PRINT_LOG(...) printf("[crc.cpp -> INFO] "); printf(__VA_ARGS__);
+#else
+  #define PRINT_LOG(...) (void)0
+#endif
+/*** END TEST ***/
+
 
 #ifdef HW_CRC
 extern "C"
@@ -39,6 +49,7 @@ namespace mbed {
 
     Crc::Crc(void)
     {
+        PRINT_LOG("Crc::InstanceCounter: %u \n", Crc::InstanceCounter);
         if (!Initialized)
         {
             Init();
