@@ -52,6 +52,7 @@
 #include "RawSerial.h"
 #include "InternalFlash.h"
 #include "crc.h"
+#include "core.h"
 
 // mbed Internal components
 #include "Timer.h"
