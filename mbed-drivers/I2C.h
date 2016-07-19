@@ -147,6 +147,10 @@ public:
     /** Set the device own address */
     void address(int address);
 
+    /* Mechanism to disable/enable own address acknowledge */
+    void address_ack_enable();
+    void address_ack_disable();
+
     /* Register I2C transfer callback */
     void attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6);
     /** I2C using DMA */

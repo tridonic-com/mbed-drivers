@@ -105,6 +105,19 @@ void I2C::stop(void) {
 }
 
 #ifdef DEVICE_I2C_DMA
+
+/* Mechanism to enable own address acknowledge */
+void I2C::address_ack_enable()
+{
+	i2c_ack_own_address(&_i2c);
+}
+
+/* Mechanism to disable own address acknowledge */
+void I2C::address_ack_disable()
+{
+	i2c_nack_own_address(&_i2c);
+}
+
 void I2C::address(int address) {
     int addr = (address & 0xFF) | 1;
     i2c_set_own_address(&_i2c, addr);
