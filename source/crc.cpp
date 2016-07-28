@@ -1,9 +1,11 @@
 /*************************************************************************//**
  *
  * \file    crc.cpp
- * \brief   ...
+ * \brief   CRC32 CPP middle layer to the lower layers
  *
- * \note    None
+ * Access to the f0, f4 and sw implementation of CRC
+ *
+ * \note
  *
  * \author  Daniel Cesarini <daniel.cesarini@tridonic.com>
  * \author  Martin Tomasini <martin.tomasini2@tridonic.com>
@@ -121,7 +123,6 @@ namespace mbed {
             result = CalcAccumulate(pui8StartAddress, ui32DataSize, pui32CRC);
         }
 
-        //*pui32CRC ^= 0xffffffff;
 #else
         result = CalcSingle(pui8StartAddress, ui32DataSize, pui32CRC);
 #endif
