@@ -44,9 +44,9 @@ namespace mbed
         int _ReleaseCrc(void);
         void _Reset(void);
         int _Calculate(uint8_t* pui8StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC);
+        int _Accumulate(uint8_t* pui8StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC);
 
     private:
-        int _Accumulate(uint8_t* pui8StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC);
         void acquireMutex();
         void releaseMutex();
         static uint32_t InstanceCounter;

@@ -30,6 +30,11 @@
 #endif
 /*** END TEST ***/
 
+#define SWITCH_ENDIAN32(VARIABLE)\
+        VARIABLE =  ((VARIABLE >> 24) & 0xff) | \
+                    ((VARIABLE << 8) & 0xff0000) | \
+                    ((VARIABLE >> 8) & 0xff00) | \
+                    ((VARIABLE << 24) & 0xff000000)
 
 #ifdef HW_CRC
 extern "C"
@@ -73,7 +78,7 @@ namespace mbed {
 
     void Crc::_Reset(void)
     {
-        // localCrc = CRC_INITVALUE;
+        localCrc = 0x00000000;      // Initial value to XOR with the first word of the array
         Reset();
     }
 
@@ -132,7 +137,36 @@ namespace mbed {
     int Crc::_Accumulate(uint8_t* pui8StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC)
     {
         int result;
-        result = CalcAccumulate(pui8StartAddress, ui32DataSize, pui32CRC);
+        uint8_t aui8Bytes[4];
+        uint8_t ui8Padding = 0x00;
+
+        if (ui32DataSize < 4)
+        {
+            for(uint8_t i = 0; i < 4; i++)
+            {
+                if (ui32DataSize - i > 0)
+                {
+                    // Copy data from pui8Data
+                    aui8Bytes[i] = pui8StartAddress[ui32DataSize-(ui32DataSize%4)+i];
+                }
+                else
+                {
+                    // Insert padding
+                    aui8Bytes[i] = ui8Padding;
+                }
+            }
+            uint32_t* pui32Bytes = (uint32_t *) aui8Bytes;
+            *pui32Bytes ^= localCrc;
+            result = Crc::_Calculate(aui8Bytes, 4, pui32CRC);
+        }
+        else
+        {
+            volatile uint32_t* pui32StartAddress = (uint32_t *) pui8StartAddress;
+            *pui32StartAddress ^= localCrc;
+            result = Crc::_Calculate(pui8StartAddress, ui32DataSize, pui32CRC);
+        }
+        localCrc = *pui32CRC; // GB-DC: We suppose that this is implicitly performing an endianness inversion
+
         return result;
     }
 
