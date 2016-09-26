@@ -111,7 +111,7 @@ void I2C::address(int address) {
     i2c_enable_i2c_it(&_i2c);
 }
 
-void I2C::attach(event_cb_t fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6) {
+void I2C::attach(event_cb_t2 fptr1, event_cb_t fptr2, event_cb_t fptr3, event_cb_t fptr4, event_cb_t fptr5, event_cb_t fptr6) {
 	i2c_register_event_cb(fptr1, fptr2, fptr3, fptr4, fptr5, fptr6);
 }
 
