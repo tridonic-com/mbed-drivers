@@ -43,7 +43,7 @@ namespace mbed {
 
     int InternalFlash::_GetSectorInfo(uint32_t ui32SectorNumber, InternalFlash::SectorInfo_td* psInfo)
     {
-        psInfo->ui32NumOfSectors = GetNumOfSectors();
+         GetNumOfSectors(&psInfo->ui32NumOfSectors);
 
         GetSectorStartAdd(ui32SectorNumber, &(psInfo->ui32StartAddress));
 
