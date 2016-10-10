@@ -1,9 +1,11 @@
 /*************************************************************************//**
  *
  * \file    crc.cpp
- * \brief   ...
+ * \brief   CRC32 CPP middle layer to the lower layers
  *
- * \note    None
+ * Access to the f0, f4 and sw implementation of CRC
+ *
+ * \note
  *
  * \author  Daniel Cesarini <daniel.cesarini@tridonic.com>
  * \author  Martin Tomasini <martin.tomasini2@tridonic.com>
@@ -28,6 +30,11 @@
 #endif
 /*** END TEST ***/
 
+#define SWITCH_ENDIAN32(VARIABLE)\
+        VARIABLE =  ((VARIABLE >> 24) & 0xff) | \
+                    ((VARIABLE << 8) & 0xff0000) | \
+                    ((VARIABLE >> 8) & 0xff00) | \
+                    ((VARIABLE << 24) & 0xff000000)
 
 #ifdef HW_CRC
 extern "C"
@@ -44,6 +51,19 @@ int Reset(void);
 int CalcSingle(uint8_t* ui32StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC);
 int CalcAccumulate(uint8_t* ui32StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC);
 #endif
+
+/*
+ * This function is taking the two parameters, xoring them, and putting the result in the first one.
+ */
+void myXor(uint8_t* pui8_inputOutputValue, uint32_t* pui32_inputValue)
+{
+    uint8_t* pui8_localInputValue = (uint8_t*) pui32_inputValue;
+
+    for (int i = 0; i < 4; i++)
+    {
+        pui8_inputOutputValue[i] ^= pui8_localInputValue[i];
+    }
+}
 
 namespace mbed {
 
@@ -71,7 +91,7 @@ namespace mbed {
 
     void Crc::_Reset(void)
     {
-        // localCrc = CRC_INITVALUE;
+        localCrc = 0x00000000;      // Initial value to XOR with the first word of the array
         Reset();
     }
 
@@ -121,7 +141,6 @@ namespace mbed {
             result = CalcAccumulate(pui8StartAddress, ui32DataSize, pui32CRC);
         }
 
-        //*pui32CRC ^= 0xffffffff;
 #else
         result = CalcSingle(pui8StartAddress, ui32DataSize, pui32CRC);
 #endif
@@ -131,7 +150,34 @@ namespace mbed {
     int Crc::_Accumulate(uint8_t* pui8StartAddress, uint32_t ui32DataSize, uint32_t* pui32CRC)
     {
         int result;
-        result = CalcAccumulate(pui8StartAddress, ui32DataSize, pui32CRC);
+        uint8_t aui8Bytes[4];
+        uint8_t ui8Padding = 0x00;
+
+        if (ui32DataSize < 4)
+        {
+            for(uint8_t i = 0; i < 4; i++)
+            {
+                if (ui32DataSize - i > 0)
+                {
+                    // Copy data from pui8Data
+                    aui8Bytes[i] = pui8StartAddress[ui32DataSize-(ui32DataSize%4)+i];
+                }
+                else
+                {
+                    // Insert padding
+                    aui8Bytes[i] = ui8Padding;
+                }
+            }
+            myXor(aui8Bytes, &localCrc);
+            result = Crc::_Calculate(aui8Bytes, 4, pui32CRC);
+        }
+        else
+        {
+            myXor(pui8StartAddress, &localCrc);
+            result = Crc::_Calculate(pui8StartAddress, ui32DataSize, pui32CRC);
+        }
+        localCrc = *pui32CRC; // GB-DC: We suppose that this is implicitly performing an endianness inversion
+
         return result;
     }
 
